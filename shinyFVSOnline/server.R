@@ -115,7 +115,7 @@ cat ("serious start up error\n")
     tstring = paste0("Project title: <b>",tit,"</b>",
            if (length(email)) paste0("<br>Email: <b>",email,"</b>") else "",
            "<br>Last accessed: <b>",
-           format(file.info(getwd())[1,"mtime"],"%a %b %d %H:%M:%S %Y"),"</b>")
+           format(file.info("/tmp/test")[1,"mtime"],"%a %b %d %H:%M:%S %Y"),"</b>")
     cat ("tstring=",tstring,"\n")
     output$projectTitle = renderText(HTML(paste0("<p>",tstring,"<p/>")))
     updateTextInput(session=session, inputId="rpTitle",
@@ -222,7 +222,7 @@ cat ("initTableGraphTools\n")
     output$table <- renderTable(NULL)
   }
 
-cat ("getwd= ",getwd(),"\n")
+cat ("getwd= ","/tmp/test","\n")
   
   ## Load
   observe({
@@ -3046,7 +3046,7 @@ cat ("runwaitback=",input$runwaitback,"\n")
         {
           runScript = paste0(globals$fvsRun$uuid,".rscript")
           rs = file(runScript,open="wt")
-          cat (paste0('setwd("',getwd(),'")\n'),file=rs)
+          cat (paste0('setwd("',"/tmp/test",'")\n'),file=rs)
           cat ('options(echo=TRUE)\nlibrary(methods)\nlibrary(RSQLite)\n',file=rs)
           cat ('pid = Sys.getpid()\n',file=rs)
           cmd = paste0('unlink("',globals$fvsRun$uuid,'.db")')
@@ -3449,7 +3449,7 @@ cat ("qry=",qry," class(dat)=",class(dat),"\n")
                FVS_kcps = if (file.exists("FVS_kcps.RData"))
                  file.copy(from="FVS_kcps.RData",to=paste0(tempDir,"/FVS_kcps.RData"))
            )}
-           curdir = getwd()
+           curdir = "/tmp/test"
            setwd(tempDir)
            zip(tf,dir())
            unlink(tempDir,recursive = TRUE)
@@ -4613,13 +4613,13 @@ cat ("fext=",fext," fname=",fname," fdir=",fdir,"\n")
     treeNT = if (class(treeNT) == "tre-error") NULL else apply(treeNT[,c(1,3)],2,toupper)
     plotNT = try(read.xlsx(xlsxFile="databaseDescription.xlsx",sheet="FVS_PlotInit"))
     plotNT = if (class(treeNT) == "tre-error") NULL else apply(plotNT[,c(1,3)],2,toupper)
-    curDir=getwd()
+    curDir="/tmp/test"
     setwd(fdir)
     if (fext %in% c("accdb","mdb"))
     {
       progress <- shiny::Progress$new(session,min=1,max=12)
       progress$set(message = "Process schema", value = 2)
-cat("curDir=",curDir," input dir=",getwd(),"\n")
+cat("curDir=",curDir," input dir=","/tmp/test","\n")
       cmd = if (.Platform$OS.type == "windows")
         shQuote(paste0('java -jar "',curDir,'/access2csv.jar" "',
                 fname,'" --schema'),type='cmd2') else
@@ -5780,7 +5780,7 @@ cat ("mapUpload, filename=",input$mapUpload$datapath," ending=",fileEnding,"\n")
         zipName = basename(input$mapUpload$datapath)
         unlink(input$mapUpload$datapath)
         progress$set(message = "Unzipping",value = 1)
-        curdir = getwd()
+        curdir = "/tmp/test"
         setwd(mapDir)
         unzip(zipName)
         unlink(zipName)
@@ -5818,7 +5818,7 @@ cat ("mapUpload, class(lyrs)=",class(lyrs),"\n")
       if (is.null(input$mapUpLayers)) return()
       datadir = dirname(isolate(input$mapUpload$datapath))
       if (!dir.exists(datadir)) return()
-      curdir = getwd()
+      curdir = "/tmp/test"
       setwd(datadir)
 cat ("input$mapUpLayers =",input$mapUpLayers,"\n")
       datadir = dir()
@@ -5978,7 +5978,7 @@ cat ("Projects hit\n")
           file.exists(paste0(dir,"/projectId.txt"))) selChoices = append(selChoices,dir)
     }
     names(selChoices) = gsub("../","",selChoices)
-    sel = match(basename(getwd()),names(selChoices))
+    sel = match(basename("/tmp/test"),names(selChoices))
     sel = if (is.na(sel)) NULL else selChoices[[sel]]
     updateSelectInput(session=session, inputId="PrjSelect",
         choices=selChoices,selected=sel)
@@ -5993,7 +5993,7 @@ cat ("Projects hit\n")
       progress <- shiny::Progress$new(session,min=1,max=12)
       progress$set(message = "Saving current run",value = 1)
       saveRun()
-      curdir = getwd()
+      curdir = "/tmp/test"
       basedir = basename(curdir)
       setwd("../")
       fn = if (nchar(input$PrjNewTitle)) input$PrjNewTitle else basedir
