@@ -1,0 +1,318 @@
+---
+title: "rFVS"
+author: "Henry Rodman"
+date: "October 25, 2019"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(tsutils)
+library(aws.s3)
+
+attach(params)
+```
+
+Growth model settings
+```{r}
+variant <- "FVSsn"
+time_interval <- 1
+years <- 10
+
+# get sppCondenseTable
+s3load(
+  object = "input/sppCondenseTableSN.rda",
+  bucket = "silviaterra-forecost"
+)
+
+# load Forest Types data
+s3load(
+  object = "input/ForestTypes.rda",
+  bucket = "silviaterra-forecost"
+)
+
+# load species crosswalk
+sppCrosswalk <- s3read_using(
+  object = "input/SNSpeciesList.csv",
+  bucket = "silviaterra-forecost",
+  FUN = read_csv
+)
+```
+
+
+Download table containing treelists for all stands
+```{r}
+treelist <- s3read_using(
+  object = "krp-2019-final-bounds/output/cookie_cut_treelist_summaries.csv",
+  bucket = "silviaterra-sequoia",
+  FUN = read_csv,
+  col_types = cols(
+    stand_id = "c"
+  )
+)
+
+metadata <- s3read_using(
+  object = "krp-2019-final-bounds/setup/bounds/metadata.csv",
+  bucket = "silviaterra-sequoia",
+  FUN = read_csv,
+  col_types = cols(
+    stand_id = "c"
+  )
+)
+
+bounds_file <- s3read_using(
+  object = "krp-2019-final-bounds/setup/bounds/bounds.zip",
+  bucket = "silviaterra-sequoia",
+  FUN = unzip,
+  exdir = tempdir()
+)
+
+bounds <- sf::st_read(bounds_file %>% str_subset(".shp"))
+
+centroids <- bounds %>%
+  sf::st_transform(4326) %>%
+  sf::st_centroid()
+
+locate <- bounds %>%
+  mutate(project = "krp") %>%
+  group_by(project) %>%
+  summarize() %>%
+  sf::st_convex_hull() %>%
+  sf::st_transform(4326) %>%
+  sf::st_centroid() %>%
+  sf::st_geometry()
+
+lat_lon <- do.call(rbind, sf::st_geometry(locate)) %>%
+    as_tibble() %>% setNames(c("LON","LAT"))
+```
+
+make one species crosswalk table
+```{r species}
+spp <- tibble(common = unique(treelist$common)) %>%
+  mutate(
+    fiaID = as.numeric(st_sp2$fiaID[match(common, st_sp2$common)]),
+    SPCD = case_when(
+      fiaID %in% sppCrosswalk[["FIA Code"]] ~ fiaID,
+      !fiaID %in% sppCrosswalk[["FIA Code"]] ~
+        sppCondenseTable$SPCD[match(fiaID, sppCondenseTable$prevSPCD)]
+    ),
+    fvsID = sppCrosswalk[["Species Code"]][match(SPCD, sppCrosswalk[["FIA Code"]])]
+  )
+
+```
+
+
+Convert treelist values to per acre
+```{r}
+treelistPerAcre <- treelist %>%
+  mutate(total_height = round(total_height_mean)) %>%
+  group_by(stand_id, common, diameter, total_height) %>%
+  summarize(
+    stems = sum(stems)
+  ) %>%
+  ungroup() %>%
+  left_join(metadata, by = "stand_id") %>%
+  transmute(
+    stand_id,
+    common,
+    diameter,
+    total_height,
+    expansion = stems / stand_acreage
+  )
+
+treelistPerAcre %>%
+  mutate(
+    bapa = 0.005454 * diameter ^ 2 * expansion
+  ) %>%
+  group_by(
+    stand_id
+  ) %>%
+  summarize(
+    tpa = sum(expansion),
+    bapa = sum(bapa)
+  ) %>%
+  pivot_longer(
+    cols = c("tpa", "bapa"),
+    names_to = "attr",
+    values_to = "value"
+  ) %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~ attr)
+
+```
+
+```{r}
+## FVS FUNTIMES:
+# Put each treelist through its paces
+# Definitions that are fixed for a given CN:
+noscreen <- sprintf("SCREEN")
+stdident <- sprintf("STDIDENT")
+invyear <- sprintf("INVYEAR%13d", 2019)
+
+locate <- sprintf(
+  "LOCATE%14.5f%10.5f", lat_lon$LAT, abs(lat_lon$LON)
+)
+
+num_cycles <- years / time_interval
+
+numcycle <- sprintf("NUMCYCLE          %s", num_cycles)
+timeint <- sprintf("TIMEINT            0%10d", time_interval)
+
+notriple <- sprintf("NOTRIPLE")
+managed <- sprintf("MANAGED            0%10d", 0)
+rewind <- sprintf("REWIND           2.0")
+noautoes <- sprintf("NOAUTOES")
+echosum <- sprintf("ECHOSUM")
+process <- sprintf("PROCESS")
+
+mgmtid <- sprintf("MGMTID\n%s", "a001")
+
+# we have a census
+design <- sprintf("DESIGN%14d         ", -1)
+
+# WE CAN WRITE THE TREEDATA AS A .DAT and then Read it in##
+# or#
+# WE can specify TREEDATA the keywordfile
+# This writes out a treelist EVERY CYCLE
+# and with a human-readable header
+treelist <- sprintf("TREELIST%12d%10d%10d%10d%10d%10d", 0, 3, 0, 1, 0, 0)
+treedata <- sprintf("TREEDATA")
+
+stands <- sample(metadata$stand_id, 10)
+
+tree_list <- treelistPerAcre %>%
+  filter(stand_id %in% stands) %>%
+  split(f = .$stand_id)
+
+dir <- file.path("/tmp", "krp")
+dir.create(dir)
+
+make_keyword <- function(trees, spp, dir) {
+
+  tl <- trees %>%
+    filter(expansion >= 0.1) %>%
+    mutate(
+      plotNumber = 1
+    ) %>%
+    left_join(spp, by = "common")
+
+  tl_formatted <- sprintf(
+    "%4d%3s%6s%1s%2s%5.1f   %3s%35s",
+    tl$plotNumber,
+    formatC(
+      as.numeric(row.names(tl)),
+      width = 3, format = "d", flag = "0"
+    ),
+    formatC(
+      as.character(paste0(" ", tl$expansion)),
+      width = 6, format = "s"
+    ),
+    1,
+    tl$fvsID,
+    tl$diameter,
+    formatC(
+      as.numeric(round(tl$total_height)),
+      width = 3,
+      format = "d"
+    ),
+    ""
+  )
+  
+  tl_file <- file.path(
+    dir,
+    paste0(unique(trees$stand_id), ".tre")
+  )
+  
+  write.table(tl_formatted,
+    file = tl_file,
+    col.names = F,
+    row.names = F,
+    quote = F
+  )
+  
+  # KEYWORD
+  key_file <- file.path(
+    dir,
+    paste0(unique(trees$stand_id), ".key")
+  )
+
+  header <- paste(
+    noscreen,
+    stdident,
+    mgmtid,
+    noautoes,
+    invyear,
+    locate,
+    design,
+    timeint,
+    numcycle,
+    notriple,
+    # sitecode,
+    managed,
+    treelist,
+    treedata,
+    echosum,
+    process,
+    sep = "\n"
+  )
+
+  write.table(
+    header,
+    file = key_file,
+    col.names = F, row.names = F, quote = F
+  )
+  
+  return(key_file)
+}
+
+keywords <- map_chr(
+  .x = tree_list,
+  .f = ~ make_keyword(trees = .x, spp = spp, dir = dir)
+)
+
+# #############################################################
+# # TIME TO RUN FVS!
+# #############################################################
+# Call FVS.
+rFVS_dir <- "/opt/open-fvs/rFVS/R"
+for (rf in dir(rFVS_dir)) source(file.path(rFVS_dir, rf))
+
+# Load variant
+fvsLoad(variant, bin = "/opt/open-fvs/trunk/bin")
+
+fvsSetCmdLine(paste0("--keywordfile=", keywords[1]))
+fetchTrees <- function(captureYears) {
+  curYear <- fvsGetEventMonitorVariables("year")
+
+  if (is.na(match(curYear, captureYears))) {
+    NULL
+  } else {
+    fvsGetTreeAttrs(c("dbh", "ht", "species", "id"))
+  }
+}
+
+# run the simulation and capture the data. Note that the first argument
+# is a string of R code that is evaluated at each stop point and the
+# second is a function that contains no arguments.
+
+# this creates the trl file
+output <- fvsInteractRun(
+  AfterEM1 = "fetchTrees(c(1:9))",
+  SimEnd = fvsGetSummary
+)
+
+for (i in uniqueCruise) {
+
+  
+  
+  
+
+  
+
+  
+
+  
+}
+print("FVS has finished!")
+```
