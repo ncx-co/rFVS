@@ -105,9 +105,9 @@ cat ("serious start up error\n")
     setProgress(message = "Start up",
                 detail  = "Loading interface elements", value = 3)
     tit=NULL
-    if (!file.exists("projectId.txt"))
-      cat("title= ",basename("/tmp/test"),"\n",file="projectId.txt")
-    prjid = scan("projectId.txt",what="",sep="\n",quiet=TRUE)
+    if (!file.exists("/tmp/projectId.txt"))
+      cat("title= ",basename("/tmp/test"),"\n",file="/tmp/projectId.txt")
+    prjid = scan("/tmp/projectId.txt",what="",sep="\n",quiet=TRUE)
     tit=prjid[grep("^title",prjid)]
     tit=trim(unlist(strsplit(tit,split="=",fixed=TRUE))[2])
     email=prjid[grep("^email",prjid)]
@@ -175,10 +175,10 @@ cat ("onSessionEnded, globals$saveOnExit=",globals$saveOnExit,
       attr(FVS_Runs,"stdstkParms") = isolate(list("sdskwdbh"=input$sdskwdbh,
                                                   "sdskldbh"=input$sdskldbh))
       save (file="FVS_Runs.RData",FVS_Runs)
-      if (file.exists("projectId.txt"))
+      if (file.exists("/tmp/projectId.txt"))
       {
-        prjid = scan("projectId.txt",what="",sep="\n",quiet=TRUE)
-        write(file="projectId.txt",prjid)
+        prjid = scan("/tmp/projectId.txt",what="",sep="\n",quiet=TRUE)
+        write(file="/tmp/projectId.txt",prjid)
       }
     }
     if (globals$reloadAppIsSet == 0 && globals$hostname == "127.0.0.1")
@@ -4223,10 +4223,10 @@ cat ("delete run",globals$fvsRun$title," uuid=",globals$fvsRun$uuid,
           FVS_Runs = globals$FVS_Runs
           save (file="FVS_Runs.RData",FVS_Runs)
         }
-        if (file.exists("projectId.txt"))
+        if (file.exists("/tmp/projectId.txt"))
         {
-          prjid = scan("projectId.txt",what="",sep="\n",quiet=TRUE)
-          write(file="projectId.txt",prjid)
+          prjid = scan("/tmp/projectId.txt",what="",sep="\n",quiet=TRUE)
+          write(file="/tmp/projectId.txt",prjid)
         }
         globals$saveOnExit = FALSE
         globals$reloadAppIsSet=1
@@ -6022,8 +6022,8 @@ cat ("Projects hit\n")
       file.copy(from=filesToCopy,to=fn,recursive=TRUE)
       setwd(fn)
       file.copy("FVS_Data.db.default","FVS_Data.db",overwrite=TRUE)
-      unlink("projectId.txt")
-      cat ("title= ",fn,"\n",file="projectId.txt")
+      unlink("/tmp/projectId.txt")
+      cat ("title= ",fn,"\n",file="/tmp/projectId.txt")
       progress$set(message = "Saving new prohect",value = 9)
       for (uuid in names(globals$FVS_Runs)) removeFVSRunFiles(uuid,all=TRUE)
       if (exists("dbOcon",envir=dbGlb,inherit=FALSE)) try(dbDisconnect(dbGlb$dbOcon))
