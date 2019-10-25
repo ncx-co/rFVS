@@ -12,17 +12,17 @@ library(openxlsx)
 
 # set shiny.trace=T for reactive tracing (lots of output)
 options(
-  shiny.maxRequestSize = 1000 * 1024^2, shiny.trace = FALSE,
+  shiny.maxRequestSize = 1000 * 1024^2, shiny.trace = TRUE,
   rgl.inShiny = TRUE
 )
 
 shinyServer(function(input, output, session) {
   if (!interactive()) {
-    # if (file.exists("FVSOnline.log")) {
-    #   unlink("FVSOnline.older.log")
-    #   file.rename("FVSOnline.log", "FVSOnline.older.log")
-    # }
-    # # make sure the sink stack is empty
+    if (file.exists("FVSOnline.log")) {
+      unlink("FVSOnline.older.log")
+      file.rename("FVSOnline.log", "FVSOnline.older.log")
+    }
+    # make sure the sink stack is empty
     while (sink.number()) sink()
     sink("FVSOnline.log")
   }
