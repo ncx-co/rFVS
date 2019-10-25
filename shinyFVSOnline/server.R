@@ -25,7 +25,7 @@ shinyServer(function(input, output, session) {
     }
     #make sure the sink stack is empty
     while (sink.number()) sink()
-    sink("/tmp/FVSOnline.log")
+    sink(stderr(), type = "output")
   }
 cat ("FVSOnline/OnLocal interface server start.\n")
        
