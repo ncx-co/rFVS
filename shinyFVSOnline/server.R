@@ -23,7 +23,7 @@ shinyServer(function(input, output, session) {
     #   file.rename("FVSOnline.log", "FVSOnline.older.log")
     # }
     # # make sure the sink stack is empty
-    # while (sink.number()) sink()
+    while (sink.number()) sink()
     # sink("FVSOnline.log")
   }
   cat(file = stderr(),"FVSOnline/OnLocal interface server start.\n")
