@@ -11,7 +11,7 @@ library(leaflet)
 library(openxlsx)
 
 # set shiny.trace=T for reactive tracing (lots of output)
-options(shiny.maxRequestSize=1000*1024^2,shiny.trace = TRUE,
+options(shiny.maxRequestSize=1000*1024^2,shiny.trace = FALSE,
         rgl.inShiny=TRUE)
 
 shinyServer(function(input, output, session) {
@@ -106,7 +106,7 @@ cat ("serious start up error\n")
                 detail  = "Loading interface elements", value = 3)
     tit=NULL
     if (!file.exists("projectId.txt"))
-      cat("title= ",basename("/tmp/test"),"\n",file="projectId.txt")
+      cat("title= ",basename(getwd()),"\n",file="projectId.txt")
     prjid = scan("projectId.txt",what="",sep="\n",quiet=TRUE)
     tit=prjid[grep("^title",prjid)]
     tit=trim(unlist(strsplit(tit,split="=",fixed=TRUE))[2])
