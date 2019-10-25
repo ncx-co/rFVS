@@ -18,13 +18,13 @@ options(
 
 shinyServer(function(input, output, session) {
   if (!interactive()) {
-    if (file.exists("FVSOnline.log")) {
-      unlink("FVSOnline.older.log")
-      file.rename("FVSOnline.log", "FVSOnline.older.log")
-    }
-    # make sure the sink stack is empty
-    while (sink.number()) sink()
-    sink("FVSOnline.log")
+    # if (file.exists("FVSOnline.log")) {
+    #   unlink("FVSOnline.older.log")
+    #   file.rename("FVSOnline.log", "FVSOnline.older.log")
+    # }
+    # # make sure the sink stack is empty
+    # while (sink.number()) sink()
+    # sink("FVSOnline.log")
   }
   cat(file = stderr(),"FVSOnline/OnLocal interface server start.\n")
 
