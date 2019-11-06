@@ -1,10 +1,17 @@
 ## FVS Configuration
 
-## On Instance
-Install subversion
+following guide on open FVS [wiki](https://sourceforge.net/p/open-fvs/wiki/BuildProcess_UnixAlike/)
+
+install some more dependencies
 ```bash
-sudo apt-get update
-sudo apt-get install -y --allow-unauthenticated subversion
+sudo apt-get update &&
+sudo apt-get install -y --allow-unauthenticated \
+  build-essential \
+  cmake \
+  gfortran \
+  libsqliteodbc \
+  subversion \
+  unixodbc-dev
 ```
 
 Clone FVS from SVN repository
@@ -12,24 +19,10 @@ Clone FVS from SVN repository
 svn checkout https://svn.code.sf.net/p/open-fvs/code/trunk/ /opt/open-fvs
 ```
 
-following https://sourceforge.net/p/open-fvs/wiki/BuildProcess_UnixAlike/...
-
-install some more dependencies
-```bash
-sudo apt-get install -y --allow-unauthenticated \
-  gfortran \
-  cmake \
-  unixodbc-dev \
-  build-essential \
-  libsqliteodbc \
-  unixodbc
-```
-
-build the executables.
-if we run `make FVSsn` the database extension won't work properly, so we will build qFVSsn which will work
+Build the executables.
 ```bash
 cd /opt/open-fvs/bin
-make qFVSsn
+make
 ```
 
 configure SQLite to play nice with FVS Database Extension by adding another few lines to end
