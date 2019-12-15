@@ -1,19 +1,42 @@
+#' @title Add Trees
+#' @description Add new tree records to an existing simulation. Designed to be 
+#' used to simulate regeneration establishment.
+#'
+#' @param newtrees A dataframe that has values defined for the following 
+#' attributes of new trees:
+#' `dbh`: Diameter breast height (inches)
+#' `species`: FVS numeric species code
+#' `ht`: Height (feet)
+#' `cratio`: Crown ratio (proportion of height in live crown
+#' `plot`: FVS numeric plot index
+#' `tpa`: Trees per acre
+#'
+#' @return A scalar integer with the return code from FVS where 0 signals trees 
+#' were added and 1 signals an error.
+#' @export
+
 fvsAddTrees <- function(newtrees) {
-  if (missing(newtrees)) stop("newtrees must be specified.")
+  if (missing(newtrees)) {
+    stop("newtrees must be specified.")
+  }
   
   cns <- colnames(newtrees)
   
-  if (is.null(cns)) stop("newtrees must have colnames.")
+  if (is.null(cns)) {
+    stop("newtrees must have colnames.")
+  }
   
   req <- c("dbh", "species", "ht", "cratio", "plot", "tpa")
   
   locrec <- match(req, cns)
   
   if (any(is.na(locrec))) {
-    stop(paste(
-      "absent attributes=",
-      paste(req[is.na(locrec)], collapse = ", ")
-    ))
+    stop(
+      paste(
+        "absent attributes=",
+        paste(req[is.na(locrec)], collapse = ", ")
+      )
+    )
   }
   
   if (any(is.na(newtrees))) {

@@ -1,3 +1,20 @@
+#' @title Add Activity
+#' @description Add an an FVS Activity to the activity schedule.
+#' @param year Year the activity is scheduled to be accomplished
+#' @param activity Can be either an FVS activity code (which is a number recognized 
+#' by the FVS activity processing code) or a character string corresponding the FVS 
+#' keyword used to schedule the activity. If a keyword is specified, this function 
+#' translates it to the necessary numeric code. Not all of the possible 
+#' keyword/code pairs are programmed, but those that control the harvesting logic 
+#' plus the establishment model PLANT and NATURAL keywords
+#' @param parms Numeric vector of parameters (if any are needed) associated with the 
+#' keyword. These must be in order and have values FVS can use. Error checking is 
+#' not done as is the case when keywords are entered into FVS via the keyword file.
+#'
+#' @return An integer flag with the value 0 if the activity was added and 1 if there 
+#' was some error.
+#' @export
+
 fvsAddActivity <- function(year, activity, parms = NULL) {
   activities <- c(
     BASE_TREELIST = 80, BASE_CRNMULT = 81,
