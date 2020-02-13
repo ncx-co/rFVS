@@ -1,3 +1,11 @@
+## Install rFVS
+```r
+install_github(
+  "SilviaTerra/rFVS",
+  ref = "make_package"
+)
+```
+
 ## FVS Configuration
 
 To install download, install, and configure FVS you can run `install_fvs.sh` on a linux machine.
