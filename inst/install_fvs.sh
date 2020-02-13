@@ -12,7 +12,7 @@ apt-get install -y --allow-unauthenticated \
 
 svn checkout https://svn.code.sf.net/p/open-fvs/code/trunk/ /opt/open-fvs
 cd /opt/open-fvs/bin
-make qFVSsn
+make
 
 cat >>/etc/odbcinst.ini <<EOF
 [SQLite3 ODBC Driver]
