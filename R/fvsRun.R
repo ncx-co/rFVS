@@ -12,18 +12,19 @@
 #'   fvsRun() until it is non-zero is how to create a simple simulation.
 #' @export
 
-fvsRun <- function(stopPointCode = NA, stopPointYear = NA) {
+fvsRun <- function(stopPointCode = NA, stopPointYear = NA, PACKAGE) {
   if (!is.na(stopPointCode) & !is.na(stopPointCode)) {
     .Fortran(
       "fvsSetStoppointCodes", as.integer(stopPointCode),
-      as.integer(stopPointYear)
+      as.integer(stopPointYear),
+      PACKAGE = PACKAGE
     )
   }
 
   repeat  {
     rtn <- .Fortran("fvs", as.integer(0)) [[1]]
     if (rtn != 0) break
-    stopPoint <- .Fortran("fvsGetRestartCode", as.integer(0))[[1]]
+    stopPoint <- .Fortran("fvsGetRestartCode", as.integer(0), PACKAGE = PACKAGE)[[1]]
     if (stopPoint != 0) break
   }
   invisible(rtn)

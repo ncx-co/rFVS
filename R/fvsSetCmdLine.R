@@ -10,7 +10,7 @@
 #'   documentation for details.
 #' @export
 
-fvsSetCmdLine <- function(cl = NULL) {
+fvsSetCmdLine <- function(cl = NULL, PACKAGE) {
   if (is.null(cl)) {
     cl <- paste(commandArgs(trailingOnly = TRUE), collapse = " ")
   }
@@ -19,7 +19,7 @@ fvsSetCmdLine <- function(cl = NULL) {
   
   invisible(
     if (nch > 0) {
-      .Fortran("fvsSetCmdLine", cl, nch, as.integer(0))
+      .Fortran("fvsSetCmdLine", cl, nch, as.integer(0), PACKAGE = PACKAGE)
     } else {
       NULL
     }
