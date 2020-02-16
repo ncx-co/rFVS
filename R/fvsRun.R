@@ -22,7 +22,7 @@ fvsRun <- function(stopPointCode = NA, stopPointYear = NA, PACKAGE) {
   }
 
   repeat  {
-    rtn <- .Fortran("fvs", as.integer(0)) [[1]]
+    rtn <- .Fortran("fvs", as.integer(0), PACKAGE = PACKAGE) [[1]]
     if (rtn != 0) break
     stopPoint <- .Fortran("fvsGetRestartCode", as.integer(0), PACKAGE = PACKAGE)[[1]]
     if (stopPoint != 0) break
