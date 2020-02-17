@@ -1,0 +1,19 @@
+Package: rFVS
+Title: R interface for the FVS growth model
+Version: 0.1.1
+Authors@R:
+    person(
+      given = "FS",
+      family = "US",
+      role = c("aut", "cre"),
+      email = "henry@silviaterra.com"
+    )
+Description: An R interface for the Forest Vegetation Simulator growth modeling
+    system. Based on the code created by USFS in open-fvs repository on
+    SourceForge: https://sourceforge.net/projects/open-fvs/.
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports:
+  RSQLite
+RoxygenNote: 7.0.2
