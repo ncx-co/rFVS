@@ -1,8 +1,7 @@
 ## Install rFVS
 ```r
 install_github(
-  "SilviaTerra/rFVS",
-  ref = "make_package"
+  "SilviaTerra/rFVS"
 )
 ```
 
